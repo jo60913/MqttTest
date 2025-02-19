@@ -5,15 +5,18 @@ import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.huangliner.mqtttest.databinding.ActivityMainBinding
+import org.eclipse.paho.client.mqttv3.IMqttActionListener
+import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-
+import info.mqtt.android.service.MqttAndroidClient
 
 class MainActivity : AppCompatActivity() {
     private var _binding:ActivityMainBinding? = null
     private val binding get() = _binding!!
+    private val mqttIP = "tcp://broker.emqx.io:1883"
+    private val mqttClientID = "mqttx_eca71cdc"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,19 +27,25 @@ class MainActivity : AppCompatActivity() {
         binding.btnMainConnect.setOnClickListener {
             try {
                 Log.e("測試","連線")
-                // 設置持久性層
-                val persistence = MemoryPersistence()
 
-                // 初始化MQTT客戶端
-                val client = MqttClient("tcp://127.0.0.1:1883", "mqttx_65c75492", persistence)
+                val mqttAndroidClient = MqttAndroidClient(this,mqttIP,mqttClientID)
+                val mqttAction = MqttConnectOptions()
+                mqttAction.connectionTimeout = 30
+                mqttAction.keepAliveInterval = 120
+                mqttAction.isAutomaticReconnect = true
+                mqttAction.isCleanSession = true
 
-                // 設置連接選項
-                val connectOptions = MqttConnectOptions()
-                connectOptions.isCleanSession = true
+                val token = mqttAndroidClient.connect(mqttAction)
+                token.actionCallback = object : IMqttActionListener{
+                    override fun onSuccess(asyncActionToken: IMqttToken?) {
+                        Log.e("測試","Mqtt 連線成功")
+                    }
 
-                // 連接到代理
-                client.connect(connectOptions)
-                Log.e("測試","${client.isConnected}")
+                    override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                        Log.e("測試","Mqtt 連線失敗 ${Log.getStackTraceString(exception)}")
+                    }
+
+                }
             } catch (e: MqttException) {
                 e.printStackTrace()
             }

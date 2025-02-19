@@ -39,15 +39,17 @@ android {
 }
 
 dependencies {
-
+    implementation(files("libs/serviceLibrary-release.aar"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.org.eclipse.paho.android.service)
     implementation(libs.org.eclipse.paho.client.mqttv3)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.timber)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
 }
