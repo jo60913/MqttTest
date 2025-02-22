@@ -1,54 +1,126 @@
 package com.huangliner.mqtttest
 
+import android.R.id.message
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.huangliner.mqtttest.databinding.ActivityMainBinding
+import info.mqtt.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.IMqttToken
-import org.eclipse.paho.client.mqttv3.MqttClient
+import org.eclipse.paho.client.mqttv3.MqttCallback
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
-import info.mqtt.android.service.MqttAndroidClient
+import org.eclipse.paho.client.mqttv3.MqttMessage
+import timber.log.Timber
+
 
 class MainActivity : AppCompatActivity() {
-    private var _binding:ActivityMainBinding? = null
+    private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
     private val mqttIP = "tcp://broker.emqx.io:1883"
-    private val mqttClientID = "mqttx_eca71cdc"
-
+    private val mqttClientID = "223"
+    var isConnect:Boolean = false
+//private val mqttIP = "tcp://192.168.0.101:1883"
+//    private val mqttClientID = "mqttx_65c75492"
+    private lateinit var mqttAndroidClient: MqttAndroidClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Timber.plant(Timber.DebugTree())
         enableEdgeToEdge()
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        
         binding.btnMainConnect.setOnClickListener {
-            try {
-                Log.e("測試","連線")
+            if(isConnect){
+                try{
+                    mqttAndroidClient.disconnect()
+                    binding.btnMainConnect.text = "連線"
 
-                val mqttAndroidClient = MqttAndroidClient(this,mqttIP,mqttClientID)
-                val mqttAction = MqttConnectOptions()
-                mqttAction.connectionTimeout = 30
-                mqttAction.keepAliveInterval = 120
-                mqttAction.isAutomaticReconnect = true
-                mqttAction.isCleanSession = true
-
-                val token = mqttAndroidClient.connect(mqttAction)
-                token.actionCallback = object : IMqttActionListener{
-                    override fun onSuccess(asyncActionToken: IMqttToken?) {
-                        Log.e("測試","Mqtt 連線成功")
-                    }
-
-                    override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                        Log.e("測試","Mqtt 連線失敗 ${Log.getStackTraceString(exception)}")
-                    }
-
+                }catch (e:Exception){
+                    Timber.e("測試 錯誤 ${Log.getStackTraceString(e)}")
                 }
-            } catch (e: MqttException) {
-                e.printStackTrace()
+            }else {
+                try {
+                    Timber.d("測試 連線")
+                    mqttAndroidClient = MqttAndroidClient(this, mqttIP, mqttClientID)
+                    val mqttAction = MqttConnectOptions()
+                    mqttAction.connectionTimeout = 30
+                    mqttAction.keepAliveInterval = 120
+                    mqttAction.isAutomaticReconnect = true
+                    mqttAction.isCleanSession = true
+                    mqttAndroidClient.setCallback(object:MqttCallback{
+                        override fun connectionLost(cause: Throwable?) {
+                            cause?.let {
+                                Timber.e("測試 丟失 ${it.message}")
+                            }
+                        }
+
+                        override fun messageArrived(topic: String?, message: MqttMessage?) {
+                            Timber.e("測試 接收到${topic}")
+                            val data = String(message?.payload!!)
+                            Timber.e("測試 接收到${data}")
+                        }
+
+                        override fun deliveryComplete(token: IMqttDeliveryToken?) {
+                            token?.let {
+                                Timber.d("測試 完整接收 ${token.message}")
+                            }
+                        }
+                    })
+                    val token = mqttAndroidClient.connect(mqttAction)
+                    token.actionCallback = object : IMqttActionListener {
+                        override fun onSuccess(asyncActionToken: IMqttToken?) {
+                            Timber.d("測試 Mqtt 連線成功")
+                        }
+
+                        override fun onFailure(
+                            asyncActionToken: IMqttToken?,
+                            exception: Throwable?
+                        ) {
+                            Timber.d("測試 Mqtt 連線失敗 ${Log.getStackTraceString(exception)}")
+                        }
+
+                    }
+
+                    binding.btnMainConnect.text = "中斷連線"
+                } catch (e: MqttException) {
+                    e.printStackTrace()
+                }
             }
+
+            isConnect = !isConnect
+        }
+
+        binding.btnMainSubscribe.setOnClickListener {
+            val topic = binding.editMainTopic.text.toString()
+            Timber.d("按下訂閱 : $topic")
+            if(topic.isEmpty()){
+                Toast.makeText(this,"請輸入訂閱主題",Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val token = mqttAndroidClient.subscribe(topic,0)
+            token.actionCallback = object : IMqttActionListener{
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Timber.d("訂閱${topic}成功")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Timber.e("訂閱${topic}失敗")
+                }
+
+            }
+        }
+
+        binding.btnMainEmit.setOnClickListener {
+            val topic = binding.editMainTopic.text.toString()
+            val mqttMessage = MqttMessage("123".toByteArray()).apply {
+                qos = 1 // 設置 QoS
+            }
+            mqttAndroidClient.publish(topic, mqttMessage)
         }
     }
 
