@@ -1,12 +1,14 @@
 package com.huangliner.mqtttest
 
-import android.R.id.message
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.huangliner.mqtttest.databinding.ActivityMainBinding
+import com.huangliner.mqtttest.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import info.mqtt.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
@@ -17,15 +19,14 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import timber.log.Timber
 
-
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
     private val mqttIP = "tcp://broker.emqx.io:1883"
     private val mqttClientID = "223"
+    private val viewModel by viewModels<MainViewModel>()
     var isConnect:Boolean = false
-//private val mqttIP = "tcp://192.168.0.101:1883"
-//    private val mqttClientID = "mqttx_65c75492"
     private lateinit var mqttAndroidClient: MqttAndroidClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +34,6 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
         binding.btnMainConnect.setOnClickListener {
             if(isConnect){
                 try{
