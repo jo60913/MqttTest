@@ -25,6 +25,7 @@ class MainViewModel @Inject constructor(private val application: Application) :
     private val _mqttMessage = MutableStateFlow("")
     private val _subscriptState = MutableStateFlow("")  //如果空字串代表成功，不是空字串帶有錯誤訊息
     private val _emitState = MutableStateFlow("")
+
     val connectState = _connectState.asStateFlow()
     val mqttMessage = _mqttMessage.asStateFlow()
     val subscriptState = _subscriptState.asStateFlow()

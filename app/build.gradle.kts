@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.timber)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.fragment.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

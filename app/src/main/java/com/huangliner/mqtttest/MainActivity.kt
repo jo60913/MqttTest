@@ -13,6 +13,7 @@ import com.huangliner.mqtttest.Utils.Companion.enableView
 import com.huangliner.mqtttest.databinding.ActivityMainBinding
 import com.huangliner.mqtttest.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val mqttClientID = "223"
     private val viewModel by viewModels<MainViewModel>()
     private var isConnect:Boolean = false
+    private val rowMessageAdapter = RowMessageAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +35,7 @@ class MainActivity : AppCompatActivity() {
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.viewMode = viewModel
+        binding.rvMainMessage.adapter = rowMessageAdapter
         binding.btnMainConnect.setOnClickListener {
             if(isConnect){
                 viewModel.disconnectMqtt()
@@ -54,7 +57,19 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
-                viewModel.emitState.collectLatest {
+                viewModel.emitState.collect {
+                    if(it.isNotEmpty()){
+                        Toast.makeText(this@MainActivity,it,Toast.LENGTH_SHORT).show()
+                    }else{
+                        Toast.makeText(this@MainActivity,"訂閱成功",Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED){
+                viewModel.subscriptState.collect {
                     if(it.isNotEmpty()){
                         Toast.makeText(this@MainActivity,it,Toast.LENGTH_SHORT).show()
                     }
@@ -64,18 +79,9 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
-                viewModel.subscriptState.collectLatest {
-                    if(it.isNotEmpty()){
-                        Toast.makeText(this@MainActivity,it,Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED){
-                viewModel.mqttMessage.collectLatest {
+                viewModel.mqttMessage.collect {
                     Timber.e("測試 view 收到的消息${it}")
+                    rowMessageAdapter.addNewMessage(it)
                 }
             }
         }
