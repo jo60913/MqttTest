@@ -3,11 +3,16 @@ package com.huangliner.mqtttest.viewmodel
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.huangliner.mqtttest.MqttConnectState
+import com.huangliner.mqtttest.ResultState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import info.mqtt.android.service.MqttAndroidClient
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -22,14 +27,14 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(private val application: Application) :
     AndroidViewModel(application) {
     private val _connectState = MutableStateFlow<MqttConnectState<String>>(MqttConnectState.Idle())
-    private val _mqttMessage = MutableStateFlow("")
-    private val _subscriptState = MutableStateFlow("")  //如果空字串代表成功，不是空字串帶有錯誤訊息
-    private val _emitState = MutableStateFlow("")
+    private val _mqttMessage = MutableSharedFlow<String>()
+    private val _subscriptState = MutableSharedFlow<ResultState>()  //如果空字串代表成功，不是空字串帶有錯誤訊息
+    private val _emitState = MutableSharedFlow<String>()
 
     val connectState = _connectState.asStateFlow()
-    val mqttMessage = _mqttMessage.asStateFlow()
-    val subscriptState = _subscriptState.asStateFlow()
-    val emitState = _emitState.asStateFlow()
+    val mqttMessage = _mqttMessage.asSharedFlow()
+    val subscriptState = _subscriptState.asSharedFlow()
+    val emitState = _emitState.asSharedFlow()
     private lateinit var mqttAndroidClient: MqttAndroidClient
 
     fun connectMqtt(mqttIP: String, mqttClientID: String) {
@@ -50,10 +55,12 @@ class MainViewModel @Inject constructor(private val application: Application) :
                 }
 
                 override fun messageArrived(topic: String?, message: MqttMessage?) {
-                    val data = String(message?.payload!!)
-                    _mqttMessage.value = data
-                    Timber.e("測試 接收到${topic}")
-                    Timber.e("測試 接收到${data}")
+                    viewModelScope.launch {
+                        val data = String(message?.payload!!)
+                        _mqttMessage.emit(data)
+                        Timber.e("測試 接收到${topic}")
+                        Timber.e("測試 接收到${data}")
+                    }
                 }
 
                 override fun deliveryComplete(token: IMqttDeliveryToken?) {
@@ -95,45 +102,56 @@ class MainViewModel @Inject constructor(private val application: Application) :
     }
 
     fun subscript(topic:String){
-        Timber.d("按下訂閱 : $topic")
-        if(topic.isEmpty()){
-            _subscriptState.value = "不能輸入為空"
-            return
-        }
-        val token = mqttAndroidClient.subscribe(topic,0)
-        token.actionCallback = object : IMqttActionListener{
-            override fun onSuccess(asyncActionToken: IMqttToken?) {
-                Timber.d("訂閱${topic}成功")
-                _subscriptState.value = ""
+        viewModelScope.launch {
+            Timber.d("按下訂閱 : $topic")
+            if(topic.isEmpty()){
+                _subscriptState.emit(ResultState.Error("請輸入內容"))
+                return@launch
             }
+            val token = mqttAndroidClient.subscribe(topic,0)
+            token.actionCallback = object : IMqttActionListener{
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Timber.d("訂閱${topic}成功")
+                    viewModelScope.launch {
+                        _subscriptState.emit(ResultState.Success)
+                    }
+                }
 
-            override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                Timber.e("訂閱${topic}失敗")
-                _subscriptState.value = "訂閱${topic}失敗 ${exception?.message}"
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Timber.e("訂閱${topic}失敗")
+                    viewModelScope.launch {
+
+                        _subscriptState.emit(ResultState.Error("訂閱${topic}失敗"))
+                    }
+                }
+
             }
-
         }
+
     }
 
     fun emitMessageToBroker(
         message:String,
         topic:String,
         qosLevel :Int = 0) {
-        if(message.isEmpty()){
-            _emitState.value = "請輸入內容"
-            return
+        viewModelScope.launch {
+            if(message.isEmpty()){
+                _emitState.emit("請輸入內容")
+                return@launch
+            }
+
+            if(topic.isEmpty()){
+                _emitState.emit("請輸入主題")
+                return@launch
+            }
+            val mqttMessage = MqttMessage(message.toByteArray()).apply {
+                qos = 1 // 設置 QoS
+            }
+            mqttAndroidClient.publish(topic, mqttMessage)
+
+            _emitState.emit("")
         }
 
-        if(topic.isEmpty()){
-            _emitState.value = "請輸入主題"
-            return
-        }
-        val mqttMessage = MqttMessage(message.toByteArray()).apply {
-            qos = 1 // 設置 QoS
-        }
-        mqttAndroidClient.publish(topic, mqttMessage)
-
-        _emitState.value = ""
 
     }
 }

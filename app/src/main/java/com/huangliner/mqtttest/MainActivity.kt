@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                     if(it.isNotEmpty()){
                         Toast.makeText(this@MainActivity,it,Toast.LENGTH_SHORT).show()
                     }else{
-                        Toast.makeText(this@MainActivity,"訂閱成功",Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity,"發送成功",Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -70,8 +70,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED){
                 viewModel.subscriptState.collect {
-                    if(it.isNotEmpty()){
-                        Toast.makeText(this@MainActivity,it,Toast.LENGTH_SHORT).show()
+                    when(it) {
+                        is ResultState.Error -> Toast.makeText(this@MainActivity,it.message,Toast.LENGTH_SHORT).show()
+                        ResultState.Success -> Toast.makeText(this@MainActivity,"訂閱成功",Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED){
                 viewModel.mqttMessage.collect {
                     Timber.e("測試 view 收到的消息${it}")
+                    binding.editMainMessage.setText("")
                     rowMessageAdapter.addNewMessage(it)
                 }
             }
