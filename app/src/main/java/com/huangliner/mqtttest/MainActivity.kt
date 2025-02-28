@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        binding.btnMainEmit.disableView()
         binding.btnMainSubscribe.setOnClickListener {
             val topic = binding.editMainTopic.text.toString()
             viewModel.subscript(topic)
@@ -68,11 +69,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED){
+            repeatOnLifecycle(Lifecycle.State.RESUMED){
                 viewModel.subscriptState.collect {
                     when(it) {
-                        is ResultState.Error -> Toast.makeText(this@MainActivity,it.message,Toast.LENGTH_SHORT).show()
-                        ResultState.Success -> Toast.makeText(this@MainActivity,"訂閱成功",Toast.LENGTH_SHORT).show()
+                        is ResultState.Error -> {
+                            Timber.d("測試 sub 錯誤")
+                            binding.btnMainEmit.disableView()
+                            Toast.makeText(this@MainActivity,it.message,Toast.LENGTH_SHORT).show()
+                        }
+                        ResultState.Success -> {
+                            Timber.d("測試 sub 成功")
+                            binding.btnMainEmit.enableView()
+                            Toast.makeText(this@MainActivity,"訂閱成功",Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
@@ -96,25 +105,21 @@ class MainActivity : AppCompatActivity() {
                             binding.btnMainConnect.text = "連線錯誤，請確認網路狀況"
                             binding.btnMainConnect.enableView()
                             binding.btnMainSubscribe.disableView()
-                            binding.btnMainEmit.disableView()
                         }
                         is MqttConnectState.Idle -> {
                             binding.btnMainConnect.text = "連線"
                             binding.btnMainConnect.enableView()
                             binding.btnMainSubscribe.disableView()
-                            binding.btnMainEmit.disableView()
                         }
                         is MqttConnectState.Loading -> {
                             binding.btnMainConnect.text = "連線中"
                             binding.btnMainConnect.disableView()
                             binding.btnMainSubscribe.disableView()
-                            binding.btnMainEmit.disableView()
                         }
                         is MqttConnectState.Success -> {
                             binding.btnMainConnect.text = "中斷連線"
                             binding.btnMainConnect.enableView()
                             binding.btnMainSubscribe.enableView()
-                            binding.btnMainEmit.enableView()
                         }
                     }
                 }

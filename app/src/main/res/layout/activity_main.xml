@@ -81,8 +81,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/til_main_message_layout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/til_main_message_layout"
-            app:layout_constraintTop_toTopOf="@+id/til_main_message_layout"
-            app:disableWhenDisconnect="@{viewMode.connectState}"/>
+            app:layout_constraintTop_toTopOf="@+id/til_main_message_layout" />
 
 
         <Button

@@ -28,7 +28,7 @@ class MainViewModel @Inject constructor(private val application: Application) :
     AndroidViewModel(application) {
     private val _connectState = MutableStateFlow<MqttConnectState<String>>(MqttConnectState.Idle())
     private val _mqttMessage = MutableSharedFlow<String>()
-    private val _subscriptState = MutableSharedFlow<ResultState>()  //如果空字串代表成功，不是空字串帶有錯誤訊息
+    private val _subscriptState = MutableSharedFlow<ResultState>()
     private val _emitState = MutableSharedFlow<String>()
 
     val connectState = _connectState.asStateFlow()
