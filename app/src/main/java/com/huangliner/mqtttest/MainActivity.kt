@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
             }else {
                 viewModel.connectMqtt(mqttIP = mqttIP, mqttClientID = mqttClientID)
             }
+            isConnect = !isConnect
         }
 
         binding.btnMainEmit.disableView()

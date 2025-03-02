@@ -95,7 +95,7 @@ class MainViewModel @Inject constructor(private val application: Application) :
     fun disconnectMqtt(){
         try{
             mqttAndroidClient.disconnect()
-
+            _connectState.value = MqttConnectState.Idle()
         }catch (e:Exception){
             Timber.e("測試 錯誤 ${Log.getStackTraceString(e)}")
         }
