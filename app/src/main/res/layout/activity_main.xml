@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewMode"
+            type="com.huangliner.mqtttest.viewmodel.MainViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity"
+        android:fitsSystemWindows="true">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_main_message"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/til_main_layout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_main_layout"
+            android:layout_width="0dp"
+            android:layout_height="70dp"
+            android:layout_marginHorizontal="10dp"
+            app:layout_constraintBottom_toTopOf="@+id/til_main_message_layout"
+            app:layout_constraintEnd_toStartOf="@+id/btn_main_subscribe"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_main_topic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="26sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btn_main_subscribe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/common_subscription"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/til_main_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/til_main_layout"
+            app:layout_constraintTop_toTopOf="@+id/til_main_layout"
+            app:disableWhenDisconnect="@{viewMode.connectState}"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_main_message_layout"
+            android:layout_width="0dp"
+            android:layout_height="70dp"
+            android:layout_marginHorizontal="10dp"
+            app:layout_constraintBottom_toTopOf="@+id/btn_main_connect"
+            app:layout_constraintEnd_toEndOf="@+id/til_main_layout"
+            app:layout_constraintEnd_toStartOf="@+id/btn_main_emit"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_main_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="26sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btn_main_emit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/common_emit"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="@+id/til_main_message_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/til_main_message_layout"
+            app:layout_constraintTop_toTopOf="@+id/til_main_message_layout" />
+
+
+        <Button
+            android:id="@+id/btn_main_connect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/common_connect"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:enableWhenDisconnect="@{viewMode.connectState}"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
