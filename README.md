@@ -21,7 +21,7 @@ com.android.application 版本 8.6.0
 2. 輸入需要訂閱的主題後按下訂閱
 3. 訂閱後就可以開始收到該主題發送出來的訊息
 4. 亦可自己發送內容至該主題
-
+![image](https://github.com/jo60913/MqttTest/blob/master/readmeimage/demo.gif?raw=true)
 ## 打包
 專案為了解android呼叫Mqtt間的互動，所以沒有打包。只是直接在Android Stduio上Build出app至手機上執行。
 
